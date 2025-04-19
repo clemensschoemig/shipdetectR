@@ -38,13 +38,50 @@ cluster_bright_pixels <- function(bright_pixels, window_size = 51) {
   return(local_count)
 }
 
+filter_clusters <- function(local_count, min_cluster_size = 100) {
+  # Create binary mask of potential ship clusters
+  filtered_clusters <- local_count >= min_cluster_size
+
+  # Plot result
+  plot(filtered_clusters, main = paste("Filtered Clusters (>", min_cluster_size, "bright pixels)"),
+       col = c("black", "red"))
+
+  return(filtered_clusters)
+}
+
+count_ships <- function(filtered_clusters) {
+  # Group connected pixels (4-directional or 8-directional — here we use 8)
+  clumped <- patches(filtered_clusters, directions = 8)
+
+  # Count number of unique ship-like objects (exclude NA / background)
+  ship_ids <- unique(na.omit(values(clumped)))
+  ship_count <- length(ship_ids)
+
+  # Print and plot
+  print(paste("Detected ships:", ship_count))
+  plot(clumped, main = paste("Detected Ships (Total:", ship_count, ")"))
+
+  return(list(count = ship_count, clumps = clumped))
+}
+
+
 ###################
 
 raster <- rast("C:/Users/cleme/Desktop/radar_files/suez_cropped_package_use/package_basis_subset_TC_vh_intensity.tif")
 plot(raster)
 
+
+# Step 1: detect bright pixels
 ship_pixels <- detect_ships(raster)
+
+# Step 2: cluster them
 ship_clusters <- cluster_bright_pixels(ship_pixels, window_size = 51)
+
+# Step 3: filter based on size
+filtered_ships <- filter_clusters(ship_clusters, min_cluster_size = 40)
+
+# Step 4: Count ships
+ship_results <- count_ships(filtered_ships)
 
 
 # plot(detected)
