@@ -1,5 +1,28 @@
+library(sf)
 library(terra)
 library(raster)
+
+mask_to_water <- function(raster, water_shapefile_path) {
+  # Load water shapefile
+  water_sf <- st_read(water_shapefile_path)
+
+  # Reproject to match raster CRS if needed
+  if (st_crs(water_sf)$epsg != crs(raster, proj=TRUE)) {
+    message("Reprojecting water shapefile to match raster CRS...")
+    water_sf <- st_transform(water_sf, crs(raster))
+  }
+
+  # Convert to terra vector
+  water_vect <- vect(water_sf)
+
+  # Crop and mask the raster
+  cropped_raster <- crop(raster, water_vect)
+  masked_raster <- mask(cropped_raster, water_vect)
+
+  plot(masked_raster, main = "Masked to Water Area Only")
+
+  return(masked_raster)
+}
 
 detect_ships <- function(raster) {
   # Step 1: Calculate global mean and SD correctly
@@ -50,29 +73,59 @@ filter_clusters <- function(local_count, min_cluster_size = 100) {
 }
 
 count_ships <- function(filtered_clusters) {
-  # Group connected pixels (4-directional or 8-directional — here we use 8)
-  clumped <- patches(filtered_clusters, directions = 8)
+  # Convert logical raster to numeric: 1 for TRUE, NA for FALSE
+  filtered_num <- classify(filtered_clusters, rcl = matrix(c(0, NA, 1, 1), ncol = 2, byrow = TRUE))
 
-  # Count number of unique ship-like objects (exclude NA / background)
+  # Now apply patches on proper values
+  clumped <- patches(filtered_num, directions = 8)
+
+  # Count how many unique clump IDs exist (exclude NA)
   ship_ids <- unique(na.omit(values(clumped)))
   ship_count <- length(ship_ids)
 
-  # Print and plot
-  print(paste("Detected ships:", ship_count))
+  # Plot result
   plot(clumped, main = paste("Detected Ships (Total:", ship_count, ")"))
 
   return(list(count = ship_count, clumps = clumped))
 }
 
+get_ship_bounding_boxes <- function(clumps_raster) {
+  # Convert clumps raster to polygons, dissolve = TRUE to group pixels of same ID
+  clump_polygons <- as.polygons(clumps_raster, dissolve = TRUE, na.rm = TRUE)
+
+  # Filter out NA values (background)
+  clump_polygons <- clump_polygons[!is.na(clump_polygons$clumps), ]
+
+  # Create bounding boxes for each polygon
+  bounding_boxes <- lapply(1:nrow(clump_polygons), function(i) {
+    b <- ext(clump_polygons[i, ])
+    # Turn extent into a polygon
+    bb_poly <- as.polygons(b)
+    values(bb_poly) <- data.frame(id = clump_polygons$clumps[i])
+    return(bb_poly)
+  })
+
+  # Combine into one SpatVector of bounding boxes
+  bbox_vect <- do.call(rbind, bounding_boxes)
+
+  # Plot result
+  plot(clumps_raster, main = "Detected Ships with Bounding Boxes")
+  plot(bbox_vect, border = "red", add = TRUE, lwd = 2)
+
+  return(bbox_vect)
+}
+
 
 ###################
 
-raster <- rast("C:/Users/cleme/Desktop/radar_files/suez_cropped_package_use/package_basis_subset_TC_vh_intensity.tif")
-plot(raster)
+sentinel_raster <- rast("C:/Users/cleme/Desktop/radar_files/suez_cropped_package_use/package_basis_subset_TC_vh_intensity.tif")
+plot(sentinel_raster)
 
+# Step 0: mask to water area
+sentinel_raster_masked <- mask_to_water(sentinel_raster, "C:/Users/cleme/Eagle/active_remote_sensing/water_bodies/iho/iho.shp")
 
 # Step 1: detect bright pixels
-ship_pixels <- detect_ships(raster)
+ship_pixels <- detect_ships(sentinel_raster_masked)
 
 # Step 2: cluster them
 ship_clusters <- cluster_bright_pixels(ship_pixels, window_size = 51)
@@ -80,9 +133,13 @@ ship_clusters <- cluster_bright_pixels(ship_pixels, window_size = 51)
 # Step 3: filter based on size
 filtered_ships <- filter_clusters(ship_clusters, min_cluster_size = 40)
 
+table(values(ship_results$clumps), useNA = "no")
+
 # Step 4: Count ships
 ship_results <- count_ships(filtered_ships)
 
-
-# plot(detected)
-# print(ship_counter(detected))
+# Step 5: Bounding boxes:
+ship_boxes <- get_ship_bounding_boxes(ship_results$clumps)
+zoom(clumps_raster)
+plot(clumps_raster, main = "Zoomed to First Ship")
+plot(ship_boxes[1], border = "red", add = TRUE, lwd = 2)
