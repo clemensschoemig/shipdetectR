@@ -118,6 +118,25 @@ get_ship_bounding_boxes <- function(clumps_raster) {
   return(bbox_vect)
 }
 
+export_ship_points <- function(bbox_vect, output_path = "detected_ships_points.shp") {
+  # Calculate centroids of bounding boxes
+  centroids <- centroids(bbox_vect)
+
+  # Assign a CRS (if missing)
+  if (is.na(crs(centroids))) {
+    crs(centroids) <- crs(bbox_vect)
+  }
+
+  # Plot to verify
+  plot(bbox_vect, border = "red", main = "Ship Bounding Boxes and Centroids")
+  plot(centroids, col = "blue", pch = 20, add = TRUE)
+
+  # Export to shapefile (can also use ".geojson" or ".gpkg")
+  writeVector(centroids, output_path, filetype = "ESRI Shapefile", overwrite = TRUE)
+
+  message("Exported ship centroids to: ", output_path)
+  return(centroids)
+}
 
 
 
@@ -128,26 +147,26 @@ get_ship_bounding_boxes <- function(clumps_raster) {
 sentinel_raster <- rast("C:/Users/cleme/Desktop/radar_files/suez_cropped_package_use/package_basis_subset_TC_vh_intensity.tif")
 plot(sentinel_raster)
 
-# Step 0: mask to water area
+# Step 1: mask to water area
 sentinel_raster_masked <- mask_to_water(sentinel_raster, "C:/Users/cleme/Eagle/active_remote_sensing/water_bodies/iho/iho.shp")
 
-# Step 1: detect bright pixels
+# Step 2: detect bright pixels
 ship_pixels <- detect_ships(sentinel_raster_masked)
 
-# Step 2: cluster them
-ship_clusters <- cluster_bright_pixels(ship_pixels, window_size = 51)
+# Step 3: cluster them
+ship_clusters <- cluster_bright_pixels(ship_pixels, window_size = 15)
 
-# Step 3: filter based on size
-filtered_ships <- filter_clusters(ship_clusters, min_cluster_size = 40)
+# Step 4: filter based on size
+filtered_ships <- filter_clusters(ship_clusters, min_cluster_size = 50)
 
 #table(values(ship_results$clumps), useNA = "no")
 
-# Step 4: Count ships
+# Step 5: Count ships
 ship_results <- count_ships(filtered_ships)
 #clumped <- ship_results$clumps
 clumps_raster <- ship_results$clumps
 
-# Step 5: Bounding boxes:
+# Step 6: Bounding boxes:
 #crs(ship_boxes) <- crs(clumped)
 #ship_boxes <- project(ship_boxes, crs(clumped))
 ship_boxes <- get_ship_bounding_boxes(clumps_raster)
@@ -158,7 +177,8 @@ ship_boxes <- get_ship_bounding_boxes(clumps_raster)
 #unique(values(clumps_raster))
 #print(ext(clumps_raster))
 
-
+# Step 7: export ship location points:
+ship_points <- export_ship_points(ship_boxes, "C:/Users/cleme/Desktop/radar_files/outout_ship_detections_coordinates/ship_centroids.shp")
 
 
 
