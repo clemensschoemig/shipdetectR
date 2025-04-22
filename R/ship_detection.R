@@ -181,5 +181,77 @@ ship_boxes <- get_ship_bounding_boxes(clumps_raster)
 ship_points <- export_ship_points(ship_boxes, "C:/Users/cleme/Desktop/radar_files/outout_ship_detections_coordinates/ship_centroids.shp")
 
 
+################
+#wrapper function
+###############
+
+
+detect_all_ships <- function(
+    raster_path,
+    water_shapefile_path,
+    output_path = "detected_ships_points.shp",
+    window_size = 15,
+    min_cluster_size = 50,
+    export = TRUE,
+    plot_results = TRUE
+) {
+  # Step 0: Load input raster
+  message("Loading raster...")
+  raster <- rast(raster_path)
+
+  # Step 1: Mask to water
+  raster_masked <- mask_to_water(raster, water_shapefile_path)
+
+  # Step 2: Detect bright pixels (ships)
+  ship_pixels <- detect_ships(raster_masked)
+
+  # Step 3: Cluster ship pixels
+  ship_clusters <- cluster_bright_pixels(ship_pixels, window_size = window_size)
+
+  # Step 4: Filter by cluster size
+  filtered <- filter_clusters(ship_clusters, min_cluster_size = min_cluster_size)
+
+  # Step 5: Count ships (clumps)
+  ship_results <- count_ships(filtered)
+  clumps_raster <- ship_results$clumps
+
+  # Step 6: Get bounding boxes
+  ship_boxes <- get_ship_bounding_boxes(clumps_raster)
+
+  # Step 7: Export ship centroids
+  if (export) {
+    ship_points <- export_ship_points(ship_boxes, output_path)
+  } else {
+    # Still calculate for return
+    ship_points <- centroids(ship_boxes)
+    crs(ship_points) <- crs(ship_boxes)
+  }
+
+  # Optionally show a final overview plot
+  if (plot_results) {
+    plot(raster_masked, main = "Final Detection with Points and Boxes")
+    plot(ship_boxes, border = "red", add = TRUE, lwd = 2)
+    plot(ship_points, col = "blue", pch = 20, add = TRUE)
+  }
+
+  message("Ship detection complete. Ships found: ", ship_results$count)
+
+  return(list(
+    masked_raster = raster_masked,
+    bright_pixels = ship_pixels,
+    clusters = ship_clusters,
+    filtered = filtered,
+    clumps = clumps_raster,
+    boxes = ship_boxes,
+    points = ship_points,
+    ship_count = ship_results$count
+  ))
+}
+
+results <- detect_all_ships(
+  raster_path = "C:/Users/cleme/Desktop/radar_files/suez_cropped_package_use/package_basis_subset_TC_vh_intensity.tif",
+  water_shapefile_path = "C:/Users/cleme/Eagle/active_remote_sensing/water_bodies/iho/iho.shp",
+  output_path = "C:/Users/cleme/Desktop/radar_files/outout_ship_detections_coordinates/ship_centroids2.shp"
+)
 
 
