@@ -120,6 +120,9 @@ get_ship_bounding_boxes <- function(clumps_raster) {
 
 
 
+
+
+
 ###################
 
 sentinel_raster <- rast("C:/Users/cleme/Desktop/radar_files/suez_cropped_package_use/package_basis_subset_TC_vh_intensity.tif")
@@ -137,41 +140,26 @@ ship_clusters <- cluster_bright_pixels(ship_pixels, window_size = 51)
 # Step 3: filter based on size
 filtered_ships <- filter_clusters(ship_clusters, min_cluster_size = 40)
 
-table(values(ship_results$clumps), useNA = "no")
+#table(values(ship_results$clumps), useNA = "no")
 
 # Step 4: Count ships
 ship_results <- count_ships(filtered_ships)
-clumped <- ship_results$clumps
+#clumped <- ship_results$clumps
 clumps_raster <- ship_results$clumps
 
 # Step 5: Bounding boxes:
+#crs(ship_boxes) <- crs(clumped)
+#ship_boxes <- project(ship_boxes, crs(clumped))
 ship_boxes <- get_ship_bounding_boxes(clumps_raster)
 
 
+#unique(values(clumps_raster))
+#clumps_raster <- ship_results$clumps
+#unique(values(clumps_raster))
+#print(ext(clumps_raster))
 
 
 
 
 
-
-
-
-print(crs(ship_boxes))
-print(crs(clumped))
-ship_boxes <- project(ship_boxes, crs(clumped))
-
-crs(ship_boxes) <- crs(clumped)
-ship_boxes <- project(ship_boxes, crs(clumped))
-plot(clumped, main = "Ships with Bounding Boxes")
-plot(ship_boxes, border = "red", lwd = 2, add = TRUE)
-
-
-print(ext(clumped))
-print(ext(ship_boxes))
-
-unique(values(clumps_raster))
-
-clumps_raster <- ship_results$clumps
-unique(values(clumps_raster))
-print(ext(clumps_raster))
 
