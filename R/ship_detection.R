@@ -90,30 +90,34 @@ count_ships <- function(filtered_clusters) {
 }
 
 get_ship_bounding_boxes <- function(clumps_raster) {
-  # Convert clumps raster to polygons, dissolve = TRUE to group pixels of same ID
+  # Convert to polygons and keep only valid clumps
   clump_polygons <- as.polygons(clumps_raster, dissolve = TRUE, na.rm = TRUE)
 
-  # Filter out NA values (background)
-  clump_polygons <- clump_polygons[!is.na(clump_polygons$clumps), ]
+  # Remove NA or 0 values
+  clump_polygons <- clump_polygons[!is.na(clump_polygons$patches), ]
+  clump_polygons <- clump_polygons[clump_polygons$patches != 0, ]
 
-  # Create bounding boxes for each polygon
+  # Create bounding boxes from each polygon
   bounding_boxes <- lapply(1:nrow(clump_polygons), function(i) {
     b <- ext(clump_polygons[i, ])
-    # Turn extent into a polygon
     bb_poly <- as.polygons(b)
-    values(bb_poly) <- data.frame(id = clump_polygons$clumps[i])
+    values(bb_poly) <- data.frame(id = clump_polygons$patches[i])
     return(bb_poly)
   })
 
-  # Combine into one SpatVector of bounding boxes
+  # Combine all bounding boxes into one vector
   bbox_vect <- do.call(rbind, bounding_boxes)
 
-  # Plot result
+  # Ensure CRS is set correctly
+  crs(bbox_vect) <- crs(clumps_raster)
+
+  # Plot
   plot(clumps_raster, main = "Detected Ships with Bounding Boxes")
   plot(bbox_vect, border = "red", add = TRUE, lwd = 2)
 
   return(bbox_vect)
 }
+
 
 
 ###################
@@ -137,9 +141,37 @@ table(values(ship_results$clumps), useNA = "no")
 
 # Step 4: Count ships
 ship_results <- count_ships(filtered_ships)
+clumped <- ship_results$clumps
+clumps_raster <- ship_results$clumps
 
 # Step 5: Bounding boxes:
-ship_boxes <- get_ship_bounding_boxes(ship_results$clumps)
-zoom(clumps_raster)
-plot(clumps_raster, main = "Zoomed to First Ship")
-plot(ship_boxes[1], border = "red", add = TRUE, lwd = 2)
+ship_boxes <- get_ship_bounding_boxes(clumps_raster)
+
+
+
+
+
+
+
+
+
+
+print(crs(ship_boxes))
+print(crs(clumped))
+ship_boxes <- project(ship_boxes, crs(clumped))
+
+crs(ship_boxes) <- crs(clumped)
+ship_boxes <- project(ship_boxes, crs(clumped))
+plot(clumped, main = "Ships with Bounding Boxes")
+plot(ship_boxes, border = "red", lwd = 2, add = TRUE)
+
+
+print(ext(clumped))
+print(ext(ship_boxes))
+
+unique(values(clumps_raster))
+
+clumps_raster <- ship_results$clumps
+unique(values(clumps_raster))
+print(ext(clumps_raster))
+
