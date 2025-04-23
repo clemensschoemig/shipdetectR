@@ -1,5 +1,3 @@
-install.packages("devtools")
-
 library(sf)
 library(terra)
 library(raster)

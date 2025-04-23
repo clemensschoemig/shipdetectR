@@ -46,9 +46,12 @@
 #wrapper function
 ###############
 
+library(shipdetectR)
 
 results <- detect_all_ships(
   raster_path = "C:/Users/cleme/Desktop/radar_files/suez_cropped_package_use/package_basis_subset_TC_vh_intensity.tif",
   water_shapefile_path = "C:/Users/cleme/Eagle/active_remote_sensing/water_bodies/iho/iho.shp",
-  output_path = "C:/Users/cleme/Desktop/radar_files/outout_ship_detections_coordinates/ship_centroids3.shp"
+  output_path = "C:/Users/cleme/Desktop/radar_files/outout_ship_detections_coordinates/ship_centroids4.shp"
 )
+
+
