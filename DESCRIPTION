@@ -1,11 +1,16 @@
 Package: shipdetectR
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Ship Detection in Satellite Radar Imagery
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Author: Clemens Schömig <clemens.schoemig@stud-mail.uni-wuerzburg.de>
+Maintainer: Clemens Schömig <clemens.schoemig@stud-mail.uni-wuerzburg.de>
+Description: Tools to detect ships in radar imagery, including masking to water areas,
+    thresholding for ship pixels, clustering, filtering, bounding box creation,
+    and export of ship locations. Uses 'terra', 'sf', and 'raster' packages.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
+Imports:
+    terra,
+    sf,
+    raster
