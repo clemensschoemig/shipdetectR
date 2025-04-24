@@ -46,12 +46,39 @@
 #wrapper function
 ###############
 
+library(devtools)
+library(usethis)
+
 library(shipdetectR)
+
+#results <- detect_all_ships(
+#  raster_path <- system.file("extdata", "package_basis_subset_TC_vh_intensity.tif", package = "shipdetectR"),
+#  shapefile_path <- system.file("extdata", "iho.shp", package = "shipdetectR"),
+#  output_path = "C:/Users/cleme/Desktop/radar_files/outout_ship_detections_coordinates/ship_centroids6.shp"
+#)
+
 
 results <- detect_all_ships(
   raster_path = "C:/Users/cleme/Desktop/radar_files/suez_cropped_package_use/package_basis_subset_TC_vh_intensity.tif",
   water_shapefile_path = "C:/Users/cleme/Eagle/active_remote_sensing/water_bodies/iho/iho.shp",
-  output_path = "C:/Users/cleme/Desktop/radar_files/outout_ship_detections_coordinates/ship_centroids4.shp"
+  output_path = "C:/Users/cleme/Desktop/radar_files/outout_ship_detections_coordinates/ship_centroids7.shp"
 )
+
+
+#devtools::document()
+#devtools::install()
+
+#library(shipdetectR)
+
+# Opens the help page for the wrapper
+#?detect_all_ships
+
+# Or equivalently:
+#help("detect_all_ships")
+
+# And for any other function:
+#?mask_to_water
+#?detect_ships
+#?cluster_bright_pixels
 
 

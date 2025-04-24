@@ -1,9 +1,9 @@
-library(sf)
-library(terra)
-library(raster)
-library(devtools)
-library(usethis)
+#' @import terra
+#' @import sf
+#' @import raster
 
+
+#' @export
 mask_to_water <- function(raster, water_shapefile_path) {
   # Load water shapefile
   water_sf <- st_read(water_shapefile_path)
@@ -26,6 +26,9 @@ mask_to_water <- function(raster, water_shapefile_path) {
   return(masked_raster)
 }
 
+
+
+#' @export
 detect_ships <- function(raster) {
   # Step 1: Calculate global mean and SD correctly
   stats <- global(raster, fun = c("mean", "sd"), na.rm = TRUE)
@@ -42,6 +45,8 @@ detect_ships <- function(raster) {
   return(bright_pixels)
 }
 
+
+#' @export
 cluster_bright_pixels <- function(bright_pixels, window_size = 51) {
   # Ensure odd window size
   if (window_size %% 2 == 0) {
@@ -63,6 +68,8 @@ cluster_bright_pixels <- function(bright_pixels, window_size = 51) {
   return(local_count)
 }
 
+
+#' @export
 filter_clusters <- function(local_count, min_cluster_size = 100) {
   # Create binary mask of potential ship clusters
   filtered_clusters <- local_count >= min_cluster_size
@@ -74,6 +81,9 @@ filter_clusters <- function(local_count, min_cluster_size = 100) {
   return(filtered_clusters)
 }
 
+
+
+#' @export
 count_ships <- function(filtered_clusters) {
   # Convert logical raster to numeric: 1 for TRUE, NA for FALSE
   filtered_num <- classify(filtered_clusters, rcl = matrix(c(0, NA, 1, 1), ncol = 2, byrow = TRUE))
@@ -91,6 +101,8 @@ count_ships <- function(filtered_clusters) {
   return(list(count = ship_count, clumps = clumped))
 }
 
+
+#' @export
 get_ship_bounding_boxes <- function(clumps_raster) {
   # Convert to polygons and keep only valid clumps
   clump_polygons <- as.polygons(clumps_raster, dissolve = TRUE, na.rm = TRUE)
@@ -120,6 +132,9 @@ get_ship_bounding_boxes <- function(clumps_raster) {
   return(bbox_vect)
 }
 
+
+
+#' @export
 export_ship_points <- function(bbox_vect, output_path = "detected_ships_points.shp") {
   # Calculate centroids of bounding boxes
   centroids <- centroids(bbox_vect)
@@ -140,6 +155,8 @@ export_ship_points <- function(bbox_vect, output_path = "detected_ships_points.s
   return(centroids)
 }
 
+
+#' @export
 detect_all_ships <- function(
     raster_path,
     water_shapefile_path,
