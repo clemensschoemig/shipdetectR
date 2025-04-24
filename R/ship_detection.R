@@ -230,30 +230,30 @@ detect_all_ships <- function(
     export = TRUE,
     plot_results = TRUE
 ) {
-  # Step 0: Load input raster
+  # Step 1: Load input raster
   message("Loading raster...")
   raster <- rast(raster_path)
 
-  # Step 1: Mask to water
+  # Step 2: Mask to water
   raster_masked <- mask_to_water(raster, water_shapefile_path)
 
-  # Step 2: Detect bright pixels (ships)
+  # Step 3: Detect bright pixels (ships)
   ship_pixels <- detect_ships(raster_masked)
 
-  # Step 3: Cluster ship pixels
+  # Step 4: Cluster ship pixels
   ship_clusters <- cluster_bright_pixels(ship_pixels, window_size = window_size)
 
-  # Step 4: Filter by cluster size
+  # Step 5: Filter by cluster size
   filtered <- filter_clusters(ship_clusters, min_cluster_size = min_cluster_size)
 
-  # Step 5: Count ships (clumps)
+  # Step 7: Count ships (clumps)
   ship_results <- count_ships(filtered)
   clumps_raster <- ship_results$clumps
 
-  # Step 6: Get bounding boxes
+  # Step 9: Get bounding boxes
   ship_boxes <- get_ship_bounding_boxes(clumps_raster)
 
-  # Step 7: Export ship centroids
+  # Step 10: Export ship centroids
   if (export) {
     ship_points <- export_ship_points(ship_boxes, output_path)
   } else {
@@ -264,9 +264,9 @@ detect_all_ships <- function(
 
   # Optionally show a final overview plot
   if (plot_results) {
-    plot(raster_masked, main = "Final Detection with Points and Boxes")
+    plot(raster_masked, main = "Ship Detections with Points and Bounding-Boxes", type = "continuous", legend = FALSE)
     plot(ship_boxes, border = "red", add = TRUE, lwd = 2)
-    plot(ship_points, col = "blue", pch = 20, add = TRUE)
+    plot(ship_points, col = "green", pch = 20, add = TRUE)
   }
 
   message("Ship detection complete. Ships found: ", ship_results$count)
