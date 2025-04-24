@@ -1,8 +1,16 @@
 #' @import terra
 #' @import sf
 #' @import raster
+NULL
 
-
+#' Mask Raster to Waterbody Shapefile
+#'
+#' Masks a SAR raster using a provided waterbody shapefile. Keeps only pixels inside water polygons.
+#'
+#' @param raster A SpatRaster from the terra package.
+#' @param water_shapefile_path Character. Path to a shapefile (.shp) with waterbody polygons.
+#'
+#' @return A masked SpatRaster.
 #' @export
 mask_to_water <- function(raster, water_shapefile_path) {
   # Load water shapefile
@@ -27,7 +35,13 @@ mask_to_water <- function(raster, water_shapefile_path) {
 }
 
 
-
+#' Detect Bright Ship Pixels
+#'
+#' Identifies radar image pixels significantly brighter than the sea background using a threshold.
+#'
+#' @param raster A SpatRaster (masked to water).
+#'
+#' @return A logical SpatRaster with TRUE for potential ship pixels.
 #' @export
 detect_ships <- function(raster) {
   # Step 1: Calculate global mean and SD correctly
@@ -46,6 +60,14 @@ detect_ships <- function(raster) {
 }
 
 
+#' Cluster Bright Pixels Locally
+#'
+#' Uses a moving window to count bright pixels in the neighborhood to find clusters.
+#'
+#' @param bright_pixels Logical SpatRaster from \code{detect_ships()}.
+#' @param window_size Integer. Size of the moving window (must be odd).
+#'
+#' @return Numeric SpatRaster of local bright-pixel counts.
 #' @export
 cluster_bright_pixels <- function(bright_pixels, window_size = 51) {
   # Ensure odd window size
@@ -69,6 +91,14 @@ cluster_bright_pixels <- function(bright_pixels, window_size = 51) {
 }
 
 
+#' Filter Pixel Clusters
+#'
+#' Filters out bright pixel clusters smaller than a given size threshold.
+#'
+#' @param local_count A numeric SpatRaster of local bright-pixel counts.
+#' @param min_cluster_size Integer. Minimum cluster size.
+#'
+#' @return Logical SpatRaster with valid clusters.
 #' @export
 filter_clusters <- function(local_count, min_cluster_size = 100) {
   # Create binary mask of potential ship clusters
@@ -82,7 +112,13 @@ filter_clusters <- function(local_count, min_cluster_size = 100) {
 }
 
 
-
+#' Count and Label Ship Clusters
+#'
+#' Labels connected bright pixel clusters and counts distinct ships.
+#'
+#' @param filtered_clusters Logical SpatRaster of valid clusters.
+#'
+#' @return A list with: \code{count} (integer) and \code{clumps} (labeled SpatRaster).
 #' @export
 count_ships <- function(filtered_clusters) {
   # Convert logical raster to numeric: 1 for TRUE, NA for FALSE
@@ -102,6 +138,13 @@ count_ships <- function(filtered_clusters) {
 }
 
 
+#' Generate Bounding Boxes for Ships
+#'
+#' Converts labeled clusters to minimum bounding boxes around each detected ship.
+#'
+#' @param clumps_raster A labeled SpatRaster from \code{count_ships()}.
+#'
+#' @return A SpatVector of bounding box polygons.
 #' @export
 get_ship_bounding_boxes <- function(clumps_raster) {
   # Convert to polygons and keep only valid clumps
@@ -133,7 +176,14 @@ get_ship_bounding_boxes <- function(clumps_raster) {
 }
 
 
-
+#' Export Ship Centroids as Shapefile
+#'
+#' Calculates centroids from bounding boxes and writes them to a shapefile.
+#'
+#' @param bbox_vect A SpatVector of ship bounding boxes.
+#' @param output_path Character. Destination for shapefile.
+#'
+#' @return SpatVector of centroid points.
 #' @export
 export_ship_points <- function(bbox_vect, output_path = "detected_ships_points.shp") {
   # Calculate centroids of bounding boxes
@@ -156,6 +206,20 @@ export_ship_points <- function(bbox_vect, output_path = "detected_ships_points.s
 }
 
 
+
+#' Run Complete Ship Detection Pipeline
+#'
+#' Runs the full ship detection workflow: mask water, detect, cluster, filter, count, box, export.
+#'
+#' @param raster_path Character. Path to input SAR raster (.tif).
+#' @param water_shapefile_path Character. Path to water shapefile (.shp).
+#' @param output_path Character. Output path for shapefile.
+#' @param window_size Integer. Moving window size (must be odd).
+#' @param min_cluster_size Integer. Minimum bright pixels per cluster.
+#' @param export Logical. Whether to export the results.
+#' @param plot_results Logical. Whether to show plots.
+#'
+#' @return A list with all intermediate data and final ship count.
 #' @export
 detect_all_ships <- function(
     raster_path,
