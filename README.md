@@ -2,11 +2,13 @@
 
 **shipdetectR** is an R package for detecting ships in Synthetic Aperture Radar (SAR) imagery.
 
-It uses brightness thresholding, spatial clustering and geometric bounding toisolate potential vessels on open water.
+It uses brightness thresholding, spatial clustering and geometric bounding to isolate potential vessels on open water.
 
-It Supports Sentinel-1 data and uses shapefiles to mask land.
+It Supports Sentinel-1 data and uses a shapefile to mask land.
 
-Use terrain-corrected data (e.g., from SNAP). Non-corrected data may cause misalignment unless properly preprocessed.
+Use terrain-corrected data (e.g., from SNAP). Non-corrected data may cause misalignment unless properly pre-processed.
+
+
 
 ## Installation
 
@@ -23,19 +25,19 @@ The ship detection process performs the following steps:
 
 1. Water Masking – Crops SAR raster to water areas using a shapefile.
 
-2. Thresholding – Flags bright pixels above mean + 1.5 × SD as potential ship pixels.
+2. Thresholding – Flags bright pixels above threshold as potential ship pixels.
 
 3. Clustering – Groups neighboring bright pixels in a moving window.
 
-4. Filtering – Removes clusters with fewer than N pixels.
+4. Filtering – Removes clusters with fewer pixels than certain threshold.
 
 5. Counting – Labels and counts each ship-like cluster.
 
 6. Bounding Boxes – Generates rectangular bounding boxes around each ship.
 
-7. Centroid Export – Exports ship center points as a shapefile.
+7. Centroid Export – Exports center points of bounding box as a shapefile.
 
-Each step can also be executed by the main detect_all_ships() function or step by step by using the individual functions.
+The workflow can be executed by the main detect_all_ships() function or each step by using the individual functions.
 
 
 
@@ -56,11 +58,15 @@ library(shipdetectR)
 results <- detect_all_ships(
   raster_path = system.file("extdata", "package_basis_subset_TC_vh_intensity.tif", package = "shipdetectR"),
   water_shapefile_path = system.file("extdata", "iho.shp", package = "shipdetectR"),
-  output_path = tempfile(fileext = ".shp"), # Temporary output
-  #output_path = "C:/your_filepath/ship_centroids.shp", # OR: Save results permanently
-  export = TRUE,
-  plot_results = TRUE
+  window_size = 15,                           # Size of the local window for clustering
+  min_cluster_size = 50,                      # Minimum pixels required to define a ship
+  output_path = tempfile(fileext = ".shp"),   # Save to a temporary file
+  export = TRUE,                              # Export ship centroids as a shapefile
+  plot_results = TRUE                         # Show plots during processing
 )
+
+# Optional: Save output permanently instead
+# output_path = "C:/your_filepath/ship_centroids.shp"
 
 ```
 
@@ -105,7 +111,7 @@ The example dataset is based on Sentinel-1 imagery that was terrain-corrected us
 
 ### Data Source
 
-**The Raster data file**:Sentinel-1 Product (Date: 21.03.2021): S1A_IW_GRDH_1SDV_20210321T034449_20210321T034514_037091_045DD0_875A
+**The Raster data file**: Sentinel-1 Product (Date: 21.03.2021): S1A_IW_GRDH_1SDV_20210321T034449_20210321T034514_037091_045DD0_875A
 
 **Mask Shapefile**: [Marine Regions: Gulf of Suez (IHO Sea Area)](http://marineregions.org/mrgid/4262)
 
