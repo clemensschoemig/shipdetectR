@@ -4,7 +4,7 @@
 \alias{filter_clusters}
 \title{Filter Pixel Clusters}
 \usage{
-filter_clusters(local_count, min_cluster_size = 100)
+filter_clusters(local_count, min_cluster_size = 50)
 }
 \arguments{
 \item{local_count}{A numeric SpatRaster of local bright-pixel counts.}

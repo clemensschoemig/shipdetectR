@@ -6,6 +6,7 @@ It uses brightness thresholding, spatial clustering and geometric bounding toiso
 
 It Supports Sentinel-1 data and uses shapefiles to mask land.
 
+Use terrain-corrected data (e.g., from SNAP). Non-corrected data may cause misalignment unless properly preprocessed.
 
 ## Installation
 
@@ -60,6 +61,7 @@ results <- detect_all_ships(
   export = TRUE,
   plot_results = TRUE
 )
+
 ```
 
 

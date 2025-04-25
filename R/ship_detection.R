@@ -69,7 +69,7 @@ detect_ships <- function(raster) {
 #'
 #' @return Numeric SpatRaster of local bright-pixel counts.
 #' @export
-cluster_bright_pixels <- function(bright_pixels, window_size = 51) {
+cluster_bright_pixels <- function(bright_pixels, window_size = 15) {
   # Ensure odd window size
   if (window_size %% 2 == 0) {
     window_size <- window_size + 1
@@ -100,7 +100,7 @@ cluster_bright_pixels <- function(bright_pixels, window_size = 51) {
 #'
 #' @return Logical SpatRaster with valid clusters.
 #' @export
-filter_clusters <- function(local_count, min_cluster_size = 100) {
+filter_clusters <- function(local_count, min_cluster_size = 50) {
   # Create binary mask of potential ship clusters
   filtered_clusters <- local_count >= min_cluster_size
 

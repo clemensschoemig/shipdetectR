@@ -4,7 +4,7 @@
 \alias{cluster_bright_pixels}
 \title{Cluster Bright Pixels Locally}
 \usage{
-cluster_bright_pixels(bright_pixels, window_size = 51)
+cluster_bright_pixels(bright_pixels, window_size = 15)
 }
 \arguments{
 \item{bright_pixels}{Logical SpatRaster from \code{detect_ships()}.}
