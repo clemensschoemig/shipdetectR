@@ -71,6 +71,11 @@ results <- detect_all_ships(
 ```
 
 
+> **Note**: A separate script `test_vessel_detect.R` is included in the repository.  
+> It demonstrates how to run each function step-by-step individually, offering a deeper look into the ship detection process.
+
+
+
 ## Functions
 
 | Function                | Description                                              |
